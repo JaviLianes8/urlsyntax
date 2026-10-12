@@ -4,18 +4,24 @@ from __future__ import annotations
 
 import string
 
-_UNRESERVED = frozenset(string.ascii_letters + string.digits + "-._~")
+UNRESERVED = frozenset(string.ascii_letters + string.digits + "-._~")
+SUB_DELIMS = frozenset("!$&'()*+,;=")
 _GEN_DELIMS = frozenset(":/?#[]@")
-_SUB_DELIMS = frozenset("!$&'()*+,;=")
 _HEX = frozenset(string.hexdigits)
 
-# Every ASCII character that may appear literally in a valid URI.
-ALLOWED = _UNRESERVED | _GEN_DELIMS | _SUB_DELIMS | frozenset("%")
+# Every ASCII character that may appear literally somewhere in a URI.
+ALLOWED = UNRESERVED | _GEN_DELIMS | SUB_DELIMS | frozenset("%")
+
+# Per-component sets from the RFC 3986 ABNF, with "%" standing for a pct-encoded triplet.
+USERINFO = UNRESERVED | SUB_DELIMS | frozenset(":%")
+REG_NAME = UNRESERVED | SUB_DELIMS | frozenset("%")
+PATH = UNRESERVED | SUB_DELIMS | frozenset(":@/%")
+QUERY = PATH | frozenset("?")
 
 
-def has_only_allowed_chars(text: str) -> bool:
-    """True when every character is a literal URI character (ASCII, no space)."""
-    return all(c in ALLOWED for c in text)
+def only(text: str, allowed: frozenset[str]) -> bool:
+    """True when every character of ``text`` is in ``allowed``."""
+    return all(c in allowed for c in text)
 
 
 def percent_escapes_are_valid(text: str) -> bool:
@@ -45,7 +51,7 @@ def normalize_percent(text: str) -> str:
         if text[i] == "%":
             hex_pair = text[i + 1 : i + 3].upper()
             decoded = chr(int(hex_pair, 16))
-            out.append(decoded if decoded in _UNRESERVED else "%" + hex_pair)
+            out.append(decoded if decoded in UNRESERVED else "%" + hex_pair)
             i += 3
         else:
             out.append(text[i])
