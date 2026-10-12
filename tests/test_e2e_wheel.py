@@ -8,7 +8,9 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import tarfile
 import venv
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -77,3 +79,18 @@ def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
     assert cli.returncode == 1
     assert cli.stdout == "http://a/y\n"
     assert cli.stderr == "invalid (unsupported-scheme): ftp://b/\n"
+
+
+def test_distributions_ship_no_third_party_corpus(tmp_path: Path) -> None:
+    built = _run(sys.executable, "-m", "build", "--outdir", tmp_path, ROOT)
+    assert built.returncode == 0, built.stderr
+    (wheel,) = tmp_path.glob("urlsyntax-*.whl")
+    (sdist,) = tmp_path.glob("urlsyntax-*.tar.gz")
+    wheel_names = zipfile.ZipFile(wheel).namelist()
+    assert all(n.startswith(("urlsyntax/", "urlsyntax-")) for n in wheel_names), wheel_names
+    with tarfile.open(sdist) as archive:
+        names = [n.split("/", 1)[1] for n in archive.getnames() if "/" in n]
+    assert "tests/upstream/MANIFEST.json" in names
+    assert "tests/test_wpt.py" in names
+    assert not any(n.endswith(("urltestdata.json", "toascii.json")) for n in names), names
+    assert not any(n.startswith((".github", "IMPROVEMENTS")) for n in names), names

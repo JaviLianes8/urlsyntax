@@ -1,0 +1,20 @@
+{
+  "urltestdata.json": {
+    "title": "web-platform-tests url/resources/urltestdata.json",
+    "url": "https://raw.githubusercontent.com/web-platform-tests/wpt/745b9bf3e485300a83b90c62b310ea02cc84e0d9/url/resources/urltestdata.json",
+    "revision": "commit 745b9bf3e485300a83b90c62b310ea02cc84e0d9",
+    "fetched": "2026-10-13",
+    "size": 229610,
+    "sha256": "81e85fd3c199c08ef9c34cf651b3580eeedd080316493bfaf277a6b5ff8cf652",
+    "licence": "BSD-3-Clause (web-platform-tests contributors)"
+  },
+  "toascii.json": {
+    "title": "web-platform-tests url/resources/toascii.json",
+    "url": "https://raw.githubusercontent.com/web-platform-tests/wpt/745b9bf3e485300a83b90c62b310ea02cc84e0d9/url/resources/toascii.json",
+    "revision": "commit 745b9bf3e485300a83b90c62b310ea02cc84e0d9",
+    "fetched": "2026-10-13",
+    "size": 9101,
+    "sha256": "644eba9d5b593df8095cfa307222f3014542ff9cc02d555f8e5660059d80470f",
+    "licence": "BSD-3-Clause (web-platform-tests contributors)"
+  }
+}

@@ -1,37 +1,37 @@
 """Agreement with the WHATWG URL Standard on the web-platform-tests corpus.
 
-tests/data/urltestdata.json and tests/data/toascii.json are copied unchanged from
-https://raw.githubusercontent.com/web-platform-tests/wpt/745b9bf3e485300a83b90c62b310ea02cc84e0d9/url/resources/
+The corpus is not committed. `python scripts/fetch_upstream.py` fetches urltestdata.json and
+toascii.json at the revision pinned in tests/upstream/MANIFEST.json; these tests skip until
+then and fail if a file differs from the manifest.
 """
 
 from __future__ import annotations
 
 import dataclasses
-import hashlib
 import json
-from pathlib import Path
 from typing import Any
 
 import pytest
+from conftest import read_upstream
 
 from urlsyntax import InvalidURLError, is_valid_http_url, normalize, parse_http_url, resolve
 from urlsyntax._chars import normalize_percent
 from urlsyntax._parse import check_characters
 
-DATA = Path(__file__).parent / "data"
-PINNED = {
-    "urltestdata.json": "81e85fd3c199c08ef9c34cf651b3580eeedd080316493bfaf277a6b5ff8cf652",
-    "toascii.json": "644eba9d5b593df8095cfa307222f3014542ff9cc02d555f8e5660059d80470f",
-}
-
 
 def _cases(name: str) -> list[dict[str, Any]]:
-    entries = json.loads((DATA / name).read_text("utf-8"))
+    entries = json.loads(read_upstream(name).decode("utf-8"))
     return [e for e in entries if isinstance(e, dict)]
 
 
-URLS = _cases("urltestdata.json")
-HOSTS = _cases("toascii.json")
+@pytest.fixture(scope="module")
+def urls() -> list[dict[str, Any]]:
+    return _cases("urltestdata.json")
+
+
+@pytest.fixture(scope="module")
+def hosts() -> list[dict[str, Any]]:
+    return _cases("toascii.json")
 
 
 def _whatwg_view(url: str) -> str:
@@ -58,19 +58,14 @@ def _is_http_base(base: object) -> bool:
     return isinstance(base, str) and is_valid_http_url(base)
 
 
-def test_the_corpus_files_are_the_pinned_upstream_files() -> None:
-    for name, digest in PINNED.items():
-        assert hashlib.sha256((DATA / name).read_bytes()).hexdigest() == digest
-
-
-def test_no_input_the_browser_parser_rejects_is_accepted() -> None:
-    accepted = [c["input"] for c in URLS if c.get("failure") and is_valid_http_url(c["input"])]
+def test_no_input_the_browser_parser_rejects_is_accepted(urls: list[dict[str, Any]]) -> None:
+    accepted = [c["input"] for c in urls if c.get("failure") and is_valid_http_url(c["input"])]
     assert accepted == []
 
 
-def test_accepted_inputs_normalize_like_the_browser_href() -> None:
+def test_accepted_inputs_normalize_like_the_browser_href(urls: list[dict[str, Any]]) -> None:
     checked = 0
-    for case in URLS:
+    for case in urls:
         if not is_valid_http_url(case["input"]):
             continue
         assert _whatwg_view(normalize(case["input"])) == normalize(case["href"]), case
@@ -78,9 +73,9 @@ def test_accepted_inputs_normalize_like_the_browser_href() -> None:
     assert checked >= 85
 
 
-def test_resolved_references_agree_with_the_browser() -> None:
+def test_resolved_references_agree_with_the_browser(urls: list[dict[str, Any]]) -> None:
     checked = 0
-    for case in URLS:
+    for case in urls:
         if is_valid_http_url(case["input"]) or not _is_http_base(case.get("base")):
             continue
         try:
@@ -101,9 +96,9 @@ def _plain_uri_text(href: str) -> bool:
     return True
 
 
-def test_every_browser_href_made_of_uri_characters_is_accepted() -> None:
+def test_every_browser_href_made_of_uri_characters_is_accepted(urls: list[dict[str, Any]]) -> None:
     hrefs = [
-        c["href"] for c in URLS if not c.get("failure") and c.get("protocol") in ("http:", "https:")
+        c["href"] for c in urls if not c.get("failure") and c.get("protocol") in ("http:", "https:")
     ]
     plain = [h for h in hrefs if _plain_uri_text(h)]
     assert len(plain) >= 230
@@ -127,12 +122,12 @@ def test_every_browser_href_made_of_uri_characters_is_accepted() -> None:
         assert normalize(href) == normalize_percent(href), href
 
 
-@pytest.mark.parametrize(
-    "case", [c for c in HOSTS if c["input"].isascii()], ids=lambda c: repr(c["input"])[:40]
-)
-def test_ascii_hosts_follow_the_browser_domain_parser(case: dict[str, Any]) -> None:
-    url = f"http://{case['input']}/"
-    if case["output"] is None:
-        assert not is_valid_http_url(url)
-    else:
-        assert parse_http_url(url).host == case["output"]
+def test_ascii_hosts_follow_the_browser_domain_parser(hosts: list[dict[str, Any]]) -> None:
+    ascii_cases = [c for c in hosts if c["input"].isascii()]
+    assert len(ascii_cases) >= 20
+    for case in ascii_cases:
+        url = f"http://{case['input']}/"
+        if case["output"] is None:
+            assert not is_valid_http_url(url), case
+        else:
+            assert parse_http_url(url).host == case["output"], case
