@@ -147,7 +147,7 @@ def _split_port(hostport: str) -> tuple[str, str | None]:
 def _port(text: str | None, scheme: str) -> int | None:
     if not text:
         return None
-    if not text.isascii() or not text.isdigit():
+    if not text.isdigit():
         raise InvalidURLError("bad-port")
     number = int(text)
     if number > 65535:

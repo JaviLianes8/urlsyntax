@@ -35,6 +35,14 @@ def test_remove_dot_segments_matches_section_5_2_4(path: str, expected: str) -> 
     assert remove_dot_segments(path) == expected
 
 
+# Written by hand from the rules of section 5.2.4 (step 2D: a lone "." or "..").
+@pytest.mark.parametrize(
+    ("path", "expected"), [(".", ""), ("..", ""), ("../..", ""), ("a/..", "/")]
+)
+def test_remove_dot_segments_drops_a_lone_dot_segment(path: str, expected: str) -> None:
+    assert remove_dot_segments(path) == expected
+
+
 @pytest.mark.parametrize(("raw", "expected"), DATA["rfc3986_6_2_2_1_case"])
 def test_case_normalization_matches_section_6_2_2_1(raw: str, expected: str) -> None:
     assert normalize(raw) == expected

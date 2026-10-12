@@ -41,7 +41,7 @@ def canonical_host(host: str) -> tuple[str, HostKind]:
 
 
 def _ip_literal(host: str) -> str:
-    if not host.endswith("]") or "]" in host[:-1]:
+    if not host.endswith("]"):
         raise InvalidURLError("bad-host")
     inner = host[1:-1]
     if _is_ipvfuture(inner):

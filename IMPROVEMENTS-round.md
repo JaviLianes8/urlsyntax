@@ -11,7 +11,7 @@ Progress:
 - [x] Command line: `python -m urlsyntax`
 - [x] Docs and packaging: README, CHANGELOG, docstrings, metadata
 - [x] Gates: ruff format, ruff check, mypy --strict, pytest
-- [ ] Mutation run: removing guarded logic makes the suite fail
+- [x] Mutation run: removing guarded logic makes the suite fail
 - [ ] Independent review findings fixed with regression tests
 - [ ] Pull request opened, guard clean
 
@@ -123,3 +123,21 @@ produces. Reading the code against RFC 3986 explains them:
   well formed; it does not repair them.
 - Other schemes. Only http and https have the rules above.
 - Refusing userinfo by default: that would break existing callers. It is one keyword away.
+
+## Verification
+
+- Gates on CPython 3.13.2: `ruff format --check .`, `ruff check .`, `mypy --strict src tests`
+  and `pytest` (with `URLSYNTAX_E2E=1` the installed-wheel test runs too, including the
+  `urlsyntax` console script).
+- Web-platform-tests corpus: 0 accepted inputs that browsers reject (95 before), every
+  accepted absolute input (85) and every resolvable relative case (34) normalizes like the
+  browser `href`, every ASCII case of `toascii.json` gives the browser host or a refusal.
+- Grammar oracle: 30,000 generated strings, every refusal of an RFC-valid URL is one of the
+  four documented browser-agreement reasons, every acceptance is RFC-valid.
+- Guarded logic was removed one piece at a time (62 mutations). The first run left six
+  alive: two were unreachable checks (a second `]` in a bracketed host, non-ASCII digits in
+  the port), now removed; three were real gaps (dot segments in a reference with an
+  authority, illegal characters that vanish with a `..` segment, a lone `.` or `..` in
+  `remove_dot_segments`), now tested. The suite now fails for 61 of 62. The survivor
+  adds `:` to the host character set, which no input can reach: the port is split off at
+  the first `:` before the host is checked.
