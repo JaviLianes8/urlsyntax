@@ -1,21 +1,30 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
 name = "urlsyntax"
-version = "0.1.0"
-description = "Syntax-only HTTP and HTTPS URL validation and safe normalization, zero dependencies, no network or DNS"
+version = "0.2.0"
+description = "Syntax-only http and https URL validation, parsing, normalization and resolution per RFC 3986 and RFC 9110, in agreement with browsers on hosts, zero dependencies, fully typed, no network or DNS"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Javier Lianes", email = "javier@lianes8studio.com" }]
-keywords = []
+keywords = ["url", "uri", "validation", "normalization", "rfc3986", "rfc9110", "whatwg", "parser", "ipv6", "ssrf", "canonicalization"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries",
     "Typing :: Typed",
 ]
 dependencies = []
@@ -30,6 +39,12 @@ Issues = "https://github.com/JaviLianes8/urlsyntax/issues"
 Changelog = "https://github.com/JaviLianes8/urlsyntax/blob/main/CHANGELOG.md"
 LinkedIn = "https://www.linkedin.com/in/jlianes/"
 Funding = "https://buymeacoffee.com/jlianesglrs"
+
+[project.scripts]
+urlsyntax = "urlsyntax._cli:main"
+
+[tool.hatch.build.targets.sdist]
+exclude = [".github", "IMPROVEMENTS-round*.md"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/urlsyntax"]

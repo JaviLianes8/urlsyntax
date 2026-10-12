@@ -2,7 +2,17 @@ import importlib.resources
 
 import urlsyntax
 
-PUBLIC_API: list[str] = ["is_valid_http_url", "normalize"]
+PUBLIC_API: list[str] = [
+    "HostKind",
+    "HttpURL",
+    "InvalidURLError",
+    "Reason",
+    "Scheme",
+    "is_valid_http_url",
+    "normalize",
+    "parse_http_url",
+    "resolve",
+]
 
 
 def test_all_lists_exactly_the_public_api() -> None:
@@ -22,3 +32,7 @@ def test_version_is_a_three_part_string() -> None:
 
 def test_the_package_ships_type_information() -> None:
     assert importlib.resources.files("urlsyntax").joinpath("py.typed").is_file()
+
+
+def test_invalid_url_error_is_a_value_error() -> None:
+    assert issubclass(urlsyntax.InvalidURLError, ValueError)
