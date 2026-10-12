@@ -12,7 +12,7 @@ Progress:
 - [x] Docs and packaging: README, CHANGELOG, docstrings, metadata
 - [x] Gates: ruff format, ruff check, mypy --strict, pytest
 - [x] Mutation run: removing guarded logic makes the suite fail
-- [ ] Independent review findings fixed with regression tests
+- [x] Independent review findings fixed with regression tests
 - [ ] Pull request opened, guard clean
 
 ## Starting point
@@ -51,8 +51,10 @@ produces. Reading the code against RFC 3986 explains them:
 - RFC 5952, https://www.rfc-editor.org/rfc/rfc5952.txt
   (sha256 c75e82c5f53bcec8148820fadf0d65935336ee2031fa6ce10504797ed4c1979d).
   Section 4: canonical IPv6 text (no leading zeros, longest then first run of two or more
-  zero fields becomes `::`, lower case). Section 5 notes that exact matching favours no dotted
-  decimal part, which is also what browsers write.
+  zero fields becomes `::`, lower case). Section 5 recommends mixed notation
+  (`::ffff:192.0.2.1`) for addresses with a well-known IPv4 prefix; this library departs from
+  that on purpose and writes every piece in hexadecimal, as the WHATWG IPv6 serializer does,
+  so one address has one normal form whatever its prefix.
 - WHATWG URL Standard source, whatwg/url commit
   `fde3f74f063341a28d437216f75735b8b40128f5` (2026-10-07),
   https://raw.githubusercontent.com/whatwg/url/fde3f74f063341a28d437216f75735b8b40128f5/url.bs
@@ -78,7 +80,8 @@ produces. Reading the code against RFC 3986 explains them:
   Non-ASCII input is refused, as in RFC 3986: an internationalized name must be given in its
   `xn--` form.
 - `normalize`: RFC 3986 section 6.2.2 and 6.2.3 with the http(s) rules of RFC 9110 section
-  4.2.3, plus RFC 5952 section 4 for IPv6 literals.
+  4.2.3, plus RFC 5952 section 4 for IPv6 literals (all hexadecimal, not the mixed
+  notation of section 5).
 - `resolve`: RFC 3986 section 5.2 (strict parser), then the result must be a valid http(s)
   URL.
 
@@ -141,3 +144,25 @@ produces. Reading the code against RFC 3986 explains them:
   `remove_dot_segments`), now tested. The suite now fails for 61 of 62. The survivor
   adds `:` to the host character set, which no input can reach: the port is split off at
   the first `:` before the host is checked.
+
+## Review fixes
+
+An independent review attacked the branch; every finding is fixed, each with a test that
+fails when the fix is removed (checked one by one):
+
+- A port of thousands of digits made `int()` raise its own `ValueError` (also in 0.1.0), so
+  `is_valid_http_url` raised instead of answering. Leading zeros are now stripped and the
+  length checked before converting: long ports are `port-out-of-range`, zero-padded ports
+  read as their number.
+- Dot-segment removal re-sliced the remaining path at every step, so a few hundred
+  kilobytes of `/a/..` took seconds (also in 0.1.0). It now walks the path with an index
+  and a segment stack, is compared with a literal transcription of the RFC method on
+  20,000 generated paths, and 200,000-segment inputs are timed.
+- `resolve` accepted a reference with `[` or `]` in a segment that a later `..` removes.
+  The reference's own path, query and fragment are now checked before resolution.
+- The command line echoed refused URLs as given: it now masks the userinfo and escapes
+  control characters, and argument errors and help go to the streams passed to `main`.
+- Docs: the IPv6 normal form departs on purpose from the mixed notation of RFC 5952
+  section 5 (now said so), zone identifiers are refused by RFC 3986 itself (moved out of the
+  browser-agreement list), and the CHANGELOG lists that an empty userinfo is now kept and no
+  longer claims host escapes as new.

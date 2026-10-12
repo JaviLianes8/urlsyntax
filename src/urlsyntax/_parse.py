@@ -149,7 +149,9 @@ def _port(text: str | None, scheme: str) -> int | None:
         return None
     if not text.isdigit():
         raise InvalidURLError("bad-port")
-    number = int(text)
-    if number > 65535:
+    digits = text.lstrip("0") or "0"
+    # Leading zeros are allowed in any number; the length check keeps int() cheap.
+    if len(digits) > 5 or int(digits) > 65535:
         raise InvalidURLError("port-out-of-range")
+    number = int(digits)
     return None if number == _DEFAULT_PORT[scheme] else number

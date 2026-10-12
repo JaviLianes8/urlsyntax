@@ -12,7 +12,8 @@ def normalize(value: str) -> str:
     section 4.2.3: lower-case scheme and host, upper-case hex in percent escapes and
     decode those that stand for unreserved characters, resolve ``.`` and ``..``
     segments, drop an empty or default port (80 for http, 443 for https), and turn an
-    empty path into ``/``. IPv6 literals are written as RFC 5952 section 4 says.
+    empty path into ``/``. IPv6 literals follow RFC 5952 section 4, written entirely in
+    hexadecimal (not the mixed notation of its section 5), as browsers write them.
     Left untouched on purpose: userinfo case, query parameter order, a trailing
     slash, and an empty ``?`` or ``#``. Raises ``InvalidURLError`` (a ``ValueError``)
     for anything ``parse_http_url`` refuses, and ``TypeError`` for a non-string.

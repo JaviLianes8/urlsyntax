@@ -59,6 +59,7 @@ INVALID = [
     "http://1.2.3.4./",
     "http://4294967295/",
     "http://exa[mple.com/",
+    "http://a:" + "1" * 5000,
 ]
 
 

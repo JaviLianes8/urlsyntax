@@ -38,6 +38,10 @@ def test_merges_with_an_empty_base_path() -> None:
         ("%zz/../c", "bad-percent-escape"),
         ("%zz", "bad-percent-escape"),
         ("[x]", "bad-path"),
+        ("[x]/../g", "bad-path"),
+        ("a]b/../g", "bad-path"),
+        ("g?a[", "bad-query"),
+        ("g#a#b", "bad-fragment"),
         ("//0x7f.1/", "ambiguous-ipv4"),
     ],
 )

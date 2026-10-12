@@ -1,4 +1,4 @@
-"""IPv6 literals: parsed by the RFC 3986 grammar, written in RFC 5952 canonical form."""
+"""IPv6 literals: parsed by the RFC 3986 grammar, written as RFC 5952 section 4 says."""
 
 from __future__ import annotations
 

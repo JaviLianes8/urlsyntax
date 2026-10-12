@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import sys
 from collections.abc import Iterable, Sequence
 from typing import TextIO
 
 from ._errors import InvalidURLError
-from ._parse import parse_http_url
+from ._parse import parse_http_url, split_reference
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -33,7 +34,8 @@ def main(
     out = stdout or sys.stdout
     err = stderr or sys.stderr
     try:
-        args = _parser().parse_args(argv)
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            args = _parser().parse_args(argv)
     except SystemExit as stop:
         return int(stop.code or 0)
     urls: Iterable[str] = args.urls or _lines(stdin or sys.stdin)
@@ -42,7 +44,7 @@ def main(
         try:
             parsed = parse_http_url(url, allow_userinfo=not args.no_userinfo)
         except InvalidURLError as error:
-            err.write(f"invalid ({error.reason}): {url}\n")
+            err.write(f"invalid ({error.reason}): {_shown(url)}\n")
             status = 1
             continue
         if not args.check:
@@ -55,3 +57,12 @@ def _lines(stream: TextIO) -> Iterable[str]:
         text = line.rstrip("\r\n")
         if text:
             yield text
+
+
+def _shown(url: str) -> str:
+    """The URL as safe to print: userinfo masked, control characters escaped."""
+    authority = split_reference(url).authority
+    if authority is not None and "@" in authority:
+        masked = "***@" + authority.rpartition("@")[2]
+        url = url.replace("//" + authority, "//" + masked, 1)
+    return "".join(c if c.isprintable() else repr(c)[1:-1] for c in url)

@@ -26,13 +26,18 @@ All notable changes to this project are documented here. The format follows
 
 - Every component is checked against its own RFC 3986 rule. Now refused: `[`, `]` and a
   second `#` in the path, query or fragment, `@` in the userinfo, `:` in a host
-  (`http://2001::1`), and IPv6 zone identifiers.
+  (`http://2001::1`), and IPv6 zone identifiers (not part of RFC 3986).
 - Hosts are refused when browsers would refuse them or read them as another address:
   `IPvFuture` literals, host escapes that do not stand for unreserved characters, and hosts
   ending in a number that are not dotted-decimal IPv4 (`127.1`, `0x7f.0.0.1`, `1.2.3.4.`).
-- `normalize` keeps an empty `?` and `#`, as RFC 3986 section 6.2.3 requires (it used to
-  drop them), writes IPv6 literals in RFC 5952 canonical form, and decodes escapes of
-  unreserved characters in the host.
+- `normalize` keeps an empty `?`, `#` and userinfo (`http://@h/` stays as it is), as RFC
+  3986 section 6.2.3 requires; it used to drop them, so stored 0.1.0 normal forms of such
+  URLs differ. IPv6 literals are written in RFC 5952 section 4 form, all in hexadecimal.
+- A port with many leading zeros is read as its number, and a very long port is refused as
+  `port-out-of-range`; 0.1.0 raised an internal `ValueError` from `int()` for ports over
+  4300 digits.
+- Dot-segment removal runs in linear time; 0.1.0 took seconds on paths of a few hundred
+  kilobytes.
 - `normalize` raises `InvalidURLError` (still a `ValueError`) for invalid input and
   `TypeError` for a non-string. `is_valid_http_url` accepts any object and returns `False`
   for non-strings, as before.

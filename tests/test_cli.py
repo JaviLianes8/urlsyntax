@@ -46,8 +46,25 @@ def test_no_userinfo_refuses_credentials() -> None:
     assert "userinfo-not-allowed" in err
 
 
-def test_usage_errors_exit_two() -> None:
-    assert _run(["--bogus"])[0] == 2
+def test_invalid_lines_are_printed_without_credentials_or_control_characters() -> None:
+    code, _, err = _run(["--no-userinfo"], "http://u:secret@a/\nhttp://a/\x1b[31m\n")
+    assert code == 1
+    assert err == (
+        "invalid (userinfo-not-allowed): http://***@a/\n"
+        "invalid (illegal-character): http://a/\\x1b[31m\n"
+    )
+
+
+def test_usage_errors_exit_two_on_the_given_streams() -> None:
+    code, out, err = _run(["--bogus"])
+    assert (code, out) == (2, "")
+    assert "unrecognized arguments: --bogus" in err
+
+
+def test_help_goes_to_the_given_stdout() -> None:
+    code, out, _ = _run(["--help"])
+    assert code == 0
+    assert "--no-userinfo" in out
 
 
 def test_runs_as_a_module() -> None:

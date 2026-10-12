@@ -50,6 +50,15 @@ def test_default_port_is_none_and_effective_port_fills_it() -> None:
     assert parse_http_url("http://a:0/").port == 0
 
 
+def test_long_ports_are_refused_or_read_without_crashing() -> None:
+    with pytest.raises(InvalidURLError) as caught:
+        parse_http_url("http://a:" + "1" * 5000)
+    assert caught.value.reason == "port-out-of-range"
+    assert parse_http_url("http://a:" + "0" * 5000 + "80/").port is None
+    assert parse_http_url("http://a:" + "0" * 5000 + "8080/").port == 8080
+    assert parse_http_url("http://a:000000/").port == 0
+
+
 def test_str_is_the_normal_form() -> None:
     for url in ("http://[::1]:81/x?#", "https://u@h/", "http://a"):
         assert str(parse_http_url(url)) == normalize(url)

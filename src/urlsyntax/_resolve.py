@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from ._chars import PATH, QUERY, only
 from ._dots import remove_dot_segments
+from ._errors import InvalidURLError
 from ._parse import Parts, check_characters, parse_http_url, split_reference
 
 
@@ -20,7 +22,15 @@ def resolve(base: str, reference: str) -> str:
     parse_http_url(base)
     if reference:
         check_characters(reference)
-    target = _transform(split_reference(base), split_reference(reference))
+    ref = split_reference(reference)
+    # Check the reference itself: a segment that ".." removes must still be valid text.
+    if not only(ref.path, PATH):
+        raise InvalidURLError("bad-path")
+    if ref.query is not None and not only(ref.query, QUERY):
+        raise InvalidURLError("bad-query")
+    if ref.fragment is not None and not only(ref.fragment, QUERY):
+        raise InvalidURLError("bad-fragment")
+    target = _transform(split_reference(base), ref)
     text = _recompose(target)
     parse_http_url(text)
     return text

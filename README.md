@@ -102,8 +102,10 @@ invalid (ambiguous-ipv4): http://127.1/
 ```
 
 With no arguments it reads one URL per line from standard input. `--check` only validates,
-`--no-userinfo` refuses credentials. The exit status is 0 when every URL is valid, 1
-otherwise. The same command is installed as `urlsyntax`.
+`--no-userinfo` refuses credentials. An invalid URL is echoed on standard error with its
+userinfo replaced by `***` and control characters escaped. The exit status is 0 when every
+URL is valid, 1 when any is invalid, 2 for a usage error. The same command is installed as
+`urlsyntax`.
 
 ## API
 
@@ -124,10 +126,11 @@ otherwise. The same command is installed as `urlsyntax`.
 | Function | Specification |
 | --- | --- |
 | `is_valid_http_url`, `parse_http_url` | RFC 3986 grammar for an absolute URI, per component; RFC 9110 sections 4.2.1 and 4.2.2 (authority required, host not empty); the browser-agreement rules below |
-| `normalize`, `HttpURL` fields | RFC 3986 sections 6.2.2 and 6.2.3, RFC 9110 section 4.2.3, RFC 5952 section 4 for IPv6 |
+| `normalize`, `HttpURL` fields | RFC 3986 sections 6.2.2 and 6.2.3, RFC 9110 section 4.2.3, RFC 5952 section 4 for IPv6 (all hexadecimal, see below) |
 | `resolve` | RFC 3986 section 5.2, strict parser |
 
-Input must already be a URI string: ASCII only, every character allowed in the component
+IPv6 zone identifiers (`[fe80::1%25eth0]`, RFC 6874) are not part of the RFC 3986 grammar
+and are refused. Input must already be a URI string: ASCII only, every character allowed in the component
 it sits in, every `%` followed by two hexadecimal digits. An internationalized host must be
 given in its `xn--` form; `xn--` labels are taken as written, as browsers do. Nothing is
 looked up: no DNS, no connection.
@@ -138,7 +141,7 @@ RFC 3986 allows a few forms that the WHATWG URL Standard, which browsers follow,
 reads as a different address. They are refused here too:
 
 - A port above 65535.
-- `IPvFuture` literals such as `[v1.x]`, and IPv6 zone identifiers.
+- `IPvFuture` literals such as `[v1.x]`.
 - A percent escape in the host that does not stand for a letter, digit, `-`, `.`, `_` or
   `~`. Browsers decode the host and reject or remap anything else.
 - A host that ends in a number but is not a plain dotted-decimal IPv4 address, such as
@@ -161,8 +164,10 @@ drop an empty password or userinfo.
 - An empty path becomes `/`.
 - Percent escapes are canonicalized: hex digits upper-cased, and escapes of unreserved
   characters decoded (`%7E` becomes `~`).
-- IPv6 literals get RFC 5952 canonical text, written entirely in hexadecimal (as browsers
-  write them).
+- IPv6 literals follow RFC 5952 section 4 (no leading zeros, longest run of zeros as `::`,
+  lower case) and are written entirely in hexadecimal, as browsers write them. This departs
+  on purpose from the mixed notation that RFC 5952 section 5 recommends for addresses such
+  as `::ffff:192.0.2.1`, so one address always has one normal form.
 
 ### What is left alone, on purpose
 
