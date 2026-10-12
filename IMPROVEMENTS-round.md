@@ -7,10 +7,10 @@ Progress:
 - [x] `normalize` fixed against RFC 3986 section 6 and RFC 9110 section 4.2.3
 - [x] Typed API: `parse_http_url`, `HttpURL`, `InvalidURLError` with reasons, `allow_userinfo`
 - [x] `resolve(base, reference)` per RFC 3986 section 5.2
-- [ ] Contracts: pinned WPT corpus, RFC examples, grammar oracle, README, typing, installed wheel
+- [x] Contracts: pinned WPT corpus, RFC examples, grammar oracle, README, typing, installed wheel
 - [x] Command line: `python -m urlsyntax`
-- [ ] Docs and packaging: README, CHANGELOG, docstrings, metadata
-- [ ] Gates: ruff format, ruff check, mypy --strict, pytest
+- [x] Docs and packaging: README, CHANGELOG, docstrings, metadata
+- [x] Gates: ruff format, ruff check, mypy --strict, pytest
 - [ ] Mutation run: removing guarded logic makes the suite fail
 - [ ] Independent review findings fixed with regression tests
 - [ ] Pull request opened, guard clean
