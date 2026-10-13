@@ -9,7 +9,7 @@ from ._parse import HttpURL, Scheme, parse_http_url
 from ._resolve import resolve
 from ._validate import is_valid_http_url
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 __all__ = [
     "HostKind",

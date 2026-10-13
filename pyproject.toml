@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "urlsyntax"
-version = "0.2.0"
+version = "0.2.1"
 description = "Syntax-only http and https URL validation, parsing, normalization and resolution per RFC 3986 and RFC 9110, in agreement with browsers on hosts, zero dependencies, fully typed, no network or DNS"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -44,7 +44,18 @@ Funding = "https://buymeacoffee.com/jlianesglrs"
 urlsyntax = "urlsyntax._cli:main"
 
 [tool.hatch.build.targets.sdist]
-exclude = [".github", "IMPROVEMENTS-round*.md"]
+# Third-party test files are fetched locally and never shipped; only their manifest is.
+include = [
+    "src/urlsyntax",
+    "tests/*.py",
+    "tests/data/rfc_examples.json",
+    "tests/upstream/MANIFEST.json",
+    "scripts/fetch_upstream.py",
+    "CHANGELOG.md",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/urlsyntax"]

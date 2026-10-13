@@ -68,7 +68,8 @@ produces. Reading the code against RFC 3986 explains them:
   `url/resources/toascii.json`
   (sha256 644eba9d5b593df8095cfa307222f3014542ff9cc02d555f8e5660059d80470f, 87 cases), from
   https://raw.githubusercontent.com/web-platform-tests/wpt/745b9bf3e485300a83b90c62b310ea02cc84e0d9/url/resources/
-  Both are committed unchanged under `tests/data/`, and a test checks their hashes.
+  Neither is committed: `scripts/fetch_upstream.py` fetches both into `tests/upstream/` and
+  the tests check them against the hashes in `tests/upstream/MANIFEST.json`.
 
 ## Which spec each function follows
 

@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-13
+
+### Changed
+
+- The web-platform-tests URL corpus is no longer committed or shipped in the sdist: it is
+  fetched on demand by `scripts/fetch_upstream.py` at a pinned revision, checked against
+  `tests/upstream/MANIFEST.json`, and hand-written browser cases keep the default suite
+  meaningful without it.
+
 ## [0.2.0] - 2026-10-12
 
 ### Added
