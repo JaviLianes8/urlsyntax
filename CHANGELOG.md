@@ -42,6 +42,8 @@ All notable changes to this project are documented here. The format follows
   decoding failure to be retained, including a deterministic incremental-input check.
 - CLI regression contracts require status 1 after invalid-then-valid arguments or
   stdin in normal and check-only modes, and preserve repeated stdin output and diagnostics.
+- CLI regression contracts cover unterminated final stdin lines in normal and check-only
+  modes and preserve mixed-case userinfo, path, query and fragment, including installed CLI checks.
 
 
 ## [0.2.1] - 2026-10-13

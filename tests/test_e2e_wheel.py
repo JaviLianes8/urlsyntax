@@ -117,6 +117,38 @@ def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
         "http://a/\n",
         "invalid (unsupported-scheme)\n",
     )
+    # Hand-written byte inputs retain the final line even without a terminator.
+    for check in (False, True):
+        for invalid in (False, True):
+            final = subprocess.run(
+                [str(script), *(["--check"] if check else [])],
+                input=b"ftp://bad/" if invalid else b"HTTP://A:80/Path",
+                capture_output=True,
+                cwd=work,
+                timeout=60,
+            )
+            assert (
+                final.returncode,
+                final.stdout.decode().replace("\r\n", "\n"),
+                final.stderr.decode().replace("\r\n", "\n"),
+            ) == (
+                1 if invalid else 0,
+                "" if check or invalid else "http://a/Path\n",
+                "invalid (unsupported-scheme)\n" if invalid else "",
+            )
+    case = subprocess.run(
+        [str(script)],
+        input="HTTP://UsEr:PaSs@Example.COM:80/Path?Key=Value#Frag\n",
+        capture_output=True,
+        text=True,
+        cwd=work,
+        timeout=60,
+    )
+    assert (case.returncode, case.stdout, case.stderr) == (
+        0,
+        "http://UsEr:PaSs@example.com/Path?Key=Value#Frag\n",
+        "",
+    )
     help_result = _run(script, "--help", cwd=work)
     assert help_result.returncode == 0 and "--no-userinfo" in help_result.stdout
     usage = _run(script, "--token=secret", cwd=work)
