@@ -70,7 +70,7 @@ Hand-written browser cases and generated properties are identified as such.
 | 16. Independent reviewer | PENDING |
 | 17. Merge and publication | PENDING; PR #4 open from `release/1.0.0`, guard CLEAN |
 | 18. Mutation round | PASS: twenty deliberate bugs caught after two missing contracts were added |
-| 19. Five QA lenses | Round 1 fixes and rounds 2-3 CLI coverage fixes below; independent approval pending |
+| 19. Five QA lenses | Round 1 fixes and rounds 2-4 CLI coverage fixes below; independent approval pending |
 
 ## Packaging, compatibility and interpreter coverage
 
@@ -253,6 +253,40 @@ with bytecode writing disabled; each copy was restored after its run.
 | Lens E M08: suppress previously seen stdin lines | Three E-007 cases fail on missing output or diagnostics; valid-only check mode passes |
 
 Final verification: 425 passed, no skips, with fetched fixtures, installed-wheel
+checks and the PyPI 0.2.1 upgrade enabled. `ruff format --check .`, `ruff check .`,
+`mypy --strict src` and `pytest` each exit 0; `mypy --strict src tests` also passes.
+Every test uses a 300-second timeout and scratch basetemp.
+
+## QA lenses: round 4 fixes
+
+Reviewed base: `518b2fecd508ecf2c571ee96cb75457c189cac60`, dated 2026-11-01.
+Fix commit: `5d0f84da554d9a13020de02efa40ebf45afb669e`.
+Both reported findings, E-008 and E-009 from lens E, are addressed; none is disputed.
+Independent re-verification remains pending.
+
+Both findings identify missing regression contracts. The unchanged implementation
+already satisfies these behaviors, so production code and the public API remain
+unchanged. CHANGELOG records the additional coverage.
+
+- E-008: `test_unterminated_stdin_line_is_processed` asserts exact status, stdout
+  and stderr for valid and invalid final lines without a newline, in normal and
+  check-only modes, both alone and after a complete valid line: eight cases.
+- E-009: `test_stdin_preserves_case_outside_scheme_and_host` asserts exact output
+  for mixed-case userinfo, path, query and fragment with LF and CRLF endings.
+  Scheme and host are normalized to lowercase while the other components retain case.
+- The installed-wheel subprocess test covers all four valid/invalid and normal/check
+  combinations with unterminated input bytes, plus the mixed-case component example.
+
+All ten new direct cases pass on the unchanged implementation. The two reviewer
+mutations were then applied individually in scratch source copies, with bytecode
+writing disabled. Each copy was restored byte-for-byte after its run.
+
+| Mutation | Contract result |
+| --- | --- |
+| Lens E N02: drop unterminated final stdin lines | Six E-008 cases and the installed CLI check fail; the two valid check-only cases pass because their observable output and status are unchanged |
+| Lens E N10: lowercase the entire stdin URL | Both E-009 cases and the installed CLI check fail on corrupted component case |
+
+Final verification: 435 passed, no skips, with fetched fixtures, installed-wheel
 checks and the PyPI 0.2.1 upgrade enabled. `ruff format --check .`, `ruff check .`,
 `mypy --strict src` and `pytest` each exit 0; `mypy --strict src tests` also passes.
 Every test uses a 300-second timeout and scratch basetemp.
