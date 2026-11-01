@@ -53,6 +53,10 @@ class InvalidURLError(ValueError):
 
     ``reason`` is a short code naming the rule that failed, such as ``"bad-host"``.
     The message never repeats the input, which may carry credentials.
+
+    >>> error = InvalidURLError("bad-host")
+    >>> (isinstance(error, ValueError), error.reason)
+    (True, 'bad-host')
     """
 
     reason: Reason

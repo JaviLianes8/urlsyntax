@@ -6,6 +6,42 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-01
+
+### Stable
+
+- The nine exported names, parsing and normalization rules, reference resolution,
+  immutable `HttpURL` fields and the eighteen `Reason` codes are stable.
+- Python 3.10 and later, no runtime dependencies, and inline type information.
+
+### Changed
+
+- CLI invalid-input diagnostics now print only the reason code, without the URL.
+  Usage errors print a fixed message without arguments. This avoids exposing secrets
+  outside userinfo and bounds diagnostics even for very long or malformed inputs.
+- Non-string parser and normalizer arguments now raise `TypeError("value must be str")`
+  without echoing the type name, whose length or content is uncontrolled.
+- The incidental top-level `annotations` attribute is removed; it was not in `__all__`.
+
+### Fixed
+
+- `resolve` rejects a literal colon in the first segment of a scheme-less relative
+  path with `bad-path`, even when dot-segment removal would erase that segment.
+  Explicit `./:x`, absolute `/:x`, later-segment colons and encoded `%3Ax` remain valid.
+- String subclasses are validated using their stored string contents across parsing,
+  validation, normalization and both resolution arguments. Overridden string methods
+  can no longer bypass checks or cause undocumented exceptions.
+- The CLI stops on stdin decoding failures with status 1 and the fixed diagnostic
+  `invalid (stdin-decoding-error)`, without a traceback or input contents.
+
+### Added
+
+- Runnable API examples, a stable-contract guide, freshly verified specification
+  fixtures, seeded property tests and installed-wheel upgrade checks from 0.2.1.
+- CLI regression contracts require output from valid lines processed before a stdin
+  decoding failure to be retained, including a deterministic incremental-input check.
+
+
 ## [0.2.1] - 2026-10-13
 
 ### Changed

@@ -17,5 +17,8 @@ def normalize(value: str) -> str:
     Left untouched on purpose: userinfo case, query parameter order, a trailing
     slash, and an empty ``?`` or ``#``. Raises ``InvalidURLError`` (a ``ValueError``)
     for anything ``parse_http_url`` refuses, and ``TypeError`` for a non-string.
+
+    >>> normalize("HTTP://Example.COM:80/a/../b")
+    'http://example.com/b'
     """
     return str(parse_http_url(value))

@@ -16,15 +16,21 @@ def resolve(base: str, reference: str) -> str:
     ``reference`` must be URI text, and the target must itself be a valid http or
     https URL, so ``"mailto:x"`` or ``"http:g"`` raise ``InvalidURLError``. An empty
     reference gives the base without its fragment.
+
+    >>> resolve("https://example.com/a/b", "../c")
+    'https://example.com/c'
     """
     if not isinstance(base, str) or not isinstance(reference, str):
         raise TypeError("base and reference must be str")
+    base, reference = str.__str__(base), str.__str__(reference)
     parse_http_url(base)
     if reference:
         check_characters(reference)
     ref = split_reference(reference)
     # Check the reference itself: a segment that ".." removes must still be valid text.
     if not only(ref.path, PATH):
+        raise InvalidURLError("bad-path")
+    if ref.scheme is None and ref.authority is None and ":" in ref.path.split("/", 1)[0]:
         raise InvalidURLError("bad-path")
     if ref.query is not None and not only(ref.query, QUERY):
         raise InvalidURLError("bad-query")

@@ -11,6 +11,11 @@ def is_valid_http_url(value: object, *, allow_userinfo: bool = True) -> bool:
 
     Applies exactly the rules of ``parse_http_url``: no name resolution, no network.
     Anything that is not a ``str`` gives False.
+
+    >>> is_valid_http_url("https://example.com/")
+    True
+    >>> is_valid_http_url(None)
+    False
     """
     if not isinstance(value, str):
         return False

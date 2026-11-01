@@ -61,6 +61,14 @@ class HttpURL:
     ``fragment`` are None when absent and ``""`` when present but empty. ``port`` is
     None when it is absent, empty or the default for the scheme. An IPv6 ``host`` is
     written without brackets.
+
+    Direct construction stores fields without validation; use ``parse_http_url``
+    to obtain validated, normalized fields.
+
+    >>> from urlsyntax import parse_http_url
+    >>> url = parse_http_url("https://example.com")
+    >>> (url.host, url.effective_port, str(url))
+    ('example.com', 443, 'https://example.com/')
     """
 
     scheme: Scheme
@@ -74,7 +82,12 @@ class HttpURL:
 
     @property
     def effective_port(self) -> int:
-        """The port a client connects to: ``port``, or 80 / 443 when it is None."""
+        """The explicit port or the scheme default.
+
+        >>> from urlsyntax import parse_http_url
+        >>> parse_http_url("http://example.com:0").effective_port
+        0
+        """
         return self.port if self.port is not None else _DEFAULT_PORT[self.scheme]
 
     def __str__(self) -> str:
@@ -95,9 +108,14 @@ def parse_http_url(value: str, *, allow_userinfo: bool = True) -> HttpURL:
     dotted-decimal IPv4 address. Raises ``TypeError`` when ``value`` is not a ``str``.
     With ``allow_userinfo=False`` a URL carrying ``user@`` or ``user:password@`` is
     refused, as RFC 9110 section 4.2.4 recommends for untrusted input.
+
+    >>> parse_http_url("HTTP://Example.COM:80").host
+    'example.com'
     """
     if not isinstance(value, str):
-        raise TypeError(f"expected str, got {type(value).__name__}")
+        raise TypeError("value must be str")
+    # Use the stored text even when a subclass overrides string operations.
+    value = str.__str__(value)
     check_characters(value)
     parts = split_reference(value)
     scheme = (parts.scheme or "").lower()
