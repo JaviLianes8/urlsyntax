@@ -70,7 +70,7 @@ Hand-written browser cases and generated properties are identified as such.
 | 16. Independent reviewer | PENDING |
 | 17. Merge and publication | PENDING; PR #4 open from `release/1.0.0`, guard CLEAN |
 | 18. Mutation round | PASS: twenty deliberate bugs caught after two missing contracts were added |
-| 19. Five QA lenses | Round 1 fixes and rounds 2-4 CLI coverage fixes below; independent approval pending |
+| 19. Five QA lenses | Round 1 fixes and rounds 2-5 CLI coverage fixes below; independent approval pending |
 
 ## Packaging, compatibility and interpreter coverage
 
@@ -287,6 +287,49 @@ writing disabled. Each copy was restored byte-for-byte after its run.
 | Lens E N10: lowercase the entire stdin URL | Both E-009 cases and the installed CLI check fail on corrupted component case |
 
 Final verification: 435 passed, no skips, with fetched fixtures, installed-wheel
+checks and the PyPI 0.2.1 upgrade enabled. `ruff format --check .`, `ruff check .`,
+`mypy --strict src` and `pytest` each exit 0; `mypy --strict src tests` also passes.
+Every test uses a 300-second timeout and scratch basetemp.
+
+## QA lenses: round 5 fixes
+
+Reviewed base: `4271e6c0be0e3c72a858dc8eb0ebb508405b1a37`, dated 2026-11-01.
+Fix commit: `67b0695c180163bf762eb520896edd59a46c4ee9`.
+All four reported findings, E-010 through E-013 from lens E, are addressed; none
+is disputed. Independent re-verification remains pending.
+
+These are missing-contract findings. All 32 new direct cases pass on the reviewed
+implementation, so production behavior and the public API are unchanged. CHANGELOG
+records the added regression coverage. Every case asserts exact status, stdout and
+stderr in normal and check-only modes:
+
+- E-010: `test_empty_stdin_succeeds_without_output` requires status 0 and no output
+  for empty stdin: two cases.
+- E-011: `test_whitespace_only_stdin_is_invalid` requires status 1 and the fixed
+  `illegal-character` diagnostic for spaces, tabs and mixed whitespace, with LF,
+  CRLF and no final terminator: eighteen cases.
+- E-012: `test_stdin_preserves_reserved_percent_escapes` preserves `%2F`, `%3F`
+  and `%23`, while still normalizing scheme/host case, default ports, unreserved
+  escapes and hexadecimal case: six cases.
+- E-013: `test_stdin_preserves_empty_query_and_fragment` preserves `?`, `#` and
+  `?#`: six cases.
+- `tests/_e2e_stdin.py` adds twenty subprocess probes to the installed-wheel test,
+  covering all four findings through the console executable from an empty working
+  directory in both modes.
+
+The four reviewer patches were applied individually in scratch source copies, with
+line endings normalized for patch application and bytecode writing disabled. Each
+mutant ran all 42 direct stdin cases and the installed-wheel test. Each source copy
+was restored byte-for-byte afterward.
+
+| Mutation | Direct contract result | Installed CLI result |
+| --- | --- | --- |
+| S01: treat empty stdin as invalid | Both E-010 cases fail | Fails on unexpected status and diagnostic |
+| S02: skip whitespace-only lines | All eighteen E-011 cases fail | Fails on missing rejection |
+| S09: decode stdin percent escapes | Four E-012 cases fail | Fails on decoded reserved slash |
+| S10: remove the empty query delimiter | E-013 normal-mode query case fails | Fails on missing query delimiter |
+
+Final verification: 467 passed, no skips, with fetched fixtures, installed-wheel
 checks and the PyPI 0.2.1 upgrade enabled. `ruff format --check .`, `ruff check .`,
 `mypy --strict src` and `pytest` each exit 0; `mypy --strict src tests` also passes.
 Every test uses a 300-second timeout and scratch basetemp.
