@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import io
 import os
 import subprocess
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -76,7 +79,7 @@ def test_runs_as_a_module() -> None:
 
 
 @pytest.mark.parametrize("argv", [[], ["--check"]])
-@pytest.mark.parametrize("prefix", [b"", b"http://a/\n" * 1000], ids=["invalid", "mixed"])
+@pytest.mark.parametrize("prefix", [b"", b"http://a/\n" * 2000], ids=["invalid", "mixed"])
 def test_malformed_stdin_encoding_has_a_fixed_diagnostic(argv: list[str], prefix: bytes) -> None:
     result = subprocess.run(
         [sys.executable, "-m", "urlsyntax", *argv],
@@ -94,7 +97,26 @@ def test_malformed_stdin_encoding_has_a_fixed_diagnostic(argv: list[str], prefix
     else:
         # Decoder read-ahead determines how much of the valid prefix was processed.
         assert all(line == b"http://a/" for line in result.stdout.splitlines())
-        assert len(result.stdout.splitlines()) <= 1000
+        assert 0 < len(result.stdout.splitlines()) <= 2000
+
+
+def test_stdin_decoding_failure_retains_output_for_preceding_lines(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def lines() -> Iterator[str]:
+        yield "HTTP://Example.COM:80/a/../b\n"
+        yield "https://B:443\n"
+        raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
+
+    # Controlled iteration makes the contract independent of decoder read-ahead.
+    monkeypatch.setattr(sys, "stdin", lines())
+    out, err = io.StringIO(), io.StringIO()
+    code = main([], stdout=out, stderr=err)
+    assert (code, out.getvalue(), err.getvalue()) == (
+        1,
+        "http://example.com/b\nhttps://b/\n",
+        "invalid (stdin-decoding-error)\n",
+    )
 
 
 @pytest.mark.parametrize("value", [" http://a/", "http://a/ ", "\thttp://a/", "http://a/\t"])
