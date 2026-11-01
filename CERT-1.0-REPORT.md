@@ -70,7 +70,7 @@ Hand-written browser cases and generated properties are identified as such.
 | 16. Independent reviewer | PENDING |
 | 17. Merge and publication | PENDING; PR #4 open from `release/1.0.0`, guard CLEAN |
 | 18. Mutation round | PASS: twenty deliberate bugs caught after two missing contracts were added |
-| 19. Five QA lenses | Round 1 fixes and round 2 E-005 coverage fix below; independent approval pending |
+| 19. Five QA lenses | Round 1 fixes and rounds 2-3 CLI coverage fixes below; independent approval pending |
 
 ## Packaging, compatibility and interpreter coverage
 
@@ -223,3 +223,36 @@ skips, with fetched fixtures, installed-wheel checks and the PyPI 0.2.1 upgrade
 enabled. `ruff format --check .`, `ruff check .`, `mypy --strict src` and `pytest`
 each exit 0; `mypy --strict src tests` also passes. Every test uses a 300-second
 timeout and scratch basetemp.
+
+## QA lenses: round 3 fixes
+
+Reviewed base: `88999dc4f5c67ee861565bda18e49b96efc6c2c1`, dated 2026-11-01.
+Fix commit: `17aaec8738186cc2b3cc46c1bde1ae1ebafa4281`.
+Both reported findings, E-006 and E-007 from lens E, are addressed; none is disputed.
+Independent re-verification remains pending.
+
+These findings identify missing contracts. The current implementation already
+satisfies both behaviors, so production code and the public API are unchanged.
+CHANGELOG records the additional coverage in `tests/test_cli.py`:
+
+- E-006: `test_valid_url_after_invalid_url_retains_failure_status` requires status
+  1 after an invalid URL followed by a valid URL, for arguments and stdin in normal
+  and check-only modes. All four cases assert exact stdout and stderr as well.
+- E-007: `test_repeated_stdin_lines_retain_output_multiplicity` requires exact
+  output order and multiplicity for adjacent and separated repeated valid lines,
+  plus repeated diagnostics for invalid lines. Four cases cover valid-only and
+  mixed stdin in normal and check-only modes.
+
+The expanded CLI suite passes all 27 cases on the unchanged implementation.
+The reviewer's patches were then applied individually in scratch source copies,
+with bytecode writing disabled; each copy was restored after its run.
+
+| Mutation | Contract result |
+| --- | --- |
+| Lens E M05: reset status before processing a valid URL | All four E-006 cases fail because status becomes 0 |
+| Lens E M08: suppress previously seen stdin lines | Three E-007 cases fail on missing output or diagnostics; valid-only check mode passes |
+
+Final verification: 425 passed, no skips, with fetched fixtures, installed-wheel
+checks and the PyPI 0.2.1 upgrade enabled. `ruff format --check .`, `ruff check .`,
+`mypy --strict src` and `pytest` each exit 0; `mypy --strict src tests` also passes.
+Every test uses a 300-second timeout and scratch basetemp.
