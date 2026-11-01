@@ -14,6 +14,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+from _e2e_stdin import check_stdin_contracts
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -91,6 +92,7 @@ def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
     assert result.stdout.strip() == "e2e ok"
 
     script = bindir / ("urlsyntax.exe" if sys.platform == "win32" else "urlsyntax")
+    check_stdin_contracts(script, work)
     cli = _run(script, "HTTP://A:80/x/../y", "ftp://b/", cwd=work)
     assert cli.returncode == 1
     assert cli.stdout == "http://a/y\n"

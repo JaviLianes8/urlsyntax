@@ -44,6 +44,9 @@ All notable changes to this project are documented here. The format follows
   stdin in normal and check-only modes, and preserve repeated stdin output and diagnostics.
 - CLI regression contracts cover unterminated final stdin lines in normal and check-only
   modes and preserve mixed-case userinfo, path, query and fragment, including installed CLI checks.
+- CLI regression contracts require empty stdin to succeed, reject whitespace-only lines,
+  and preserve reserved percent escapes and empty query/fragment delimiters, with exact
+  status and output checks in normal and check-only modes and through the installed CLI.
 
 
 ## [0.2.1] - 2026-10-13
