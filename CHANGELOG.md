@@ -40,6 +40,8 @@ All notable changes to this project are documented here. The format follows
   fixtures, seeded property tests and installed-wheel upgrade checks from 0.2.1.
 - CLI regression contracts require output from valid lines processed before a stdin
   decoding failure to be retained, including a deterministic incremental-input check.
+- CLI regression contracts require status 1 after invalid-then-valid arguments or
+  stdin in normal and check-only modes, and preserve repeated stdin output and diagnostics.
 
 
 ## [0.2.1] - 2026-10-13

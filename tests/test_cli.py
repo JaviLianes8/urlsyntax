@@ -37,6 +37,39 @@ def test_reports_invalid_urls_and_exits_one() -> None:
     assert err == "invalid (unsupported-scheme)\ninvalid (ambiguous-ipv4)\n"
 
 
+@pytest.mark.parametrize("check", [False, True], ids=["normal", "check"])
+@pytest.mark.parametrize("from_stdin", [False, True], ids=["arguments", "stdin"])
+def test_valid_url_after_invalid_url_retains_failure_status(check: bool, from_stdin: bool) -> None:
+    argv = ["--check"] if check else []
+    urls = ["ftp://bad/", "http://good/"]
+    stdin = "\n".join(urls) + "\n" if from_stdin else ""
+    if not from_stdin:
+        argv.extend(urls)
+    assert _run(argv, stdin) == (
+        1,
+        "" if check else "http://good/\n",
+        "invalid (unsupported-scheme)\n",
+    )
+
+
+@pytest.mark.parametrize("check", [False, True], ids=["normal", "check"])
+@pytest.mark.parametrize("include_invalid", [False, True], ids=["valid", "mixed"])
+def test_repeated_stdin_lines_retain_output_multiplicity(
+    check: bool, include_invalid: bool
+) -> None:
+    stdin = "http://a/\nhttp://a/\n"
+    if include_invalid:
+        stdin += "ftp://bad/\nhttp://b/\nftp://bad/\nhttp://a/\n"
+    output = "http://a/\nhttp://a/\n"
+    if include_invalid:
+        output += "http://b/\nhttp://a/\n"
+    assert _run(["--check"] if check else [], stdin) == (
+        1 if include_invalid else 0,
+        "" if check else output,
+        "invalid (unsupported-scheme)\n" * 2 if include_invalid else "",
+    )
+
+
 def test_check_prints_nothing() -> None:
     assert _run(["--check", "http://a/"]) == (0, "", "")
     assert _run(["--check", "http://a b/"])[0] == 1
