@@ -71,3 +71,25 @@ def test_refuses_non_string_arguments() -> None:
         resolve(BASE, None)  # type: ignore[arg-type]
     with pytest.raises(TypeError):
         resolve(None, "a")  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("reference", [":", ":x", "::", ":x/bar", ":x/../ok", ":?q", ":#f"])
+def test_relative_first_segment_refuses_literal_colons(reference: str) -> None:
+    # Hand-written path-noscheme cases, including a segment removed by resolution.
+    with pytest.raises(InvalidURLError) as caught:
+        resolve(BASE, reference)
+    assert caught.value.reason == "bad-path"
+
+
+@pytest.mark.parametrize(
+    ("reference", "target"),
+    [("./:x", "/a/:x"), ("/:x", "/:x"), ("%3Ax", "/a/%3Ax"), ("a/:x", "/a/a/:x")],
+)
+def test_relative_colons_outside_the_first_segment_are_valid(reference: str, target: str) -> None:
+    assert resolve(BASE, reference) == "http://example.com" + target
+
+
+def test_absolute_reference_still_requires_a_valid_base() -> None:
+    with pytest.raises(InvalidURLError) as caught:
+        resolve("ftp://a/", "https://b/")
+    assert caught.value.reason == "unsupported-scheme"

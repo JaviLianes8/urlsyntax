@@ -16,7 +16,15 @@ from typing import get_args, get_type_hints
 import pytest
 
 import urlsyntax
-from urlsyntax import HostKind, HttpURL, Reason, Scheme, parse_http_url
+from urlsyntax import (
+    HostKind,
+    HttpURL,
+    InvalidURLError,
+    Reason,
+    Scheme,
+    is_valid_http_url,
+    parse_http_url,
+)
 from urlsyntax._cli import main
 
 
@@ -101,3 +109,31 @@ def test_non_string_errors_do_not_quote_arbitrary_type_names() -> None:
     value = type("secret" * 10000, (), {})()
     with pytest.raises(TypeError, match=r"^value must be str$"):
         parse_http_url(value)
+
+
+def test_empty_userinfo_is_rejected_when_disabled() -> None:
+    with pytest.raises(InvalidURLError) as caught:
+        parse_http_url("http://@a/", allow_userinfo=False)
+    assert caught.value.reason == "userinfo-not-allowed"
+
+
+def test_validator_rejects_empty_userinfo_when_disabled() -> None:
+    assert not is_valid_http_url("http://@a/", allow_userinfo=False)
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement"),
+    [
+        ("scheme", "https"),
+        ("userinfo", ""),
+        ("host", "other"),
+        ("host_kind", "name"),
+        ("port", 80),
+        ("path", "/other"),
+        ("query", ""),
+        ("fragment", ""),
+    ],
+)
+def test_value_equality_compares_every_stored_field(field: str, replacement: object) -> None:
+    value = HttpURL("http", None, "127.0.0.1", "ipv4", None, "/", None, None)
+    assert dataclasses.replace(value, **{field: replacement}) != value  # type: ignore[arg-type]

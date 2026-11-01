@@ -9,11 +9,15 @@ hashable `HttpURL`. `normalize(value)` returns its string form. Both raise
 `InvalidURLError` for invalid strings and `TypeError` for non-strings.
 `is_valid_http_url(value, *, allow_userinfo=True)` returns `False` for non-strings
 or invalid strings. The option follows normal Python truth testing.
+String subclasses are accepted using their stored contents, ignoring overridden
+string methods. This also applies to both `resolve` arguments.
 
 `resolve(base, reference)` accepts two strings and returns an HTTP(S) target using
 the strict RFC 3986 algorithm. It validates the base, reference and target. It keeps
 the original case, escapes and explicit default port, so call `normalize` separately
 when needed. Empty references remove the base fragment. Non-strings raise `TypeError`.
+A literal colon in the first segment of a scheme-less relative path is rejected
+with `bad-path`; use `./:x` or `%3Ax` to refer to a colon-leading segment.
 
 ```python
 from urlsyntax import normalize, parse_http_url, resolve
@@ -59,9 +63,14 @@ reserved escapes and trailing slashes remain meaningful.
 Blank lines are skipped. `--check` suppresses normal forms; `--no-userinfo` rejects
 even empty userinfo. Exit status: 0 success, 1 invalid input, 2 invalid usage.
 Invalid-input stderr now contains only `invalid (reason)`; usage diagnostics omit
-arguments. Successful stdout still contains the requested normal forms, including
+arguments. Stdin decoding failures stop processing with status 1 and the fixed
+diagnostic `invalid (stdin-decoding-error)`. Previously processed lines retain their
+output; decoder read-ahead can prevent processing earlier lines in the failing buffer.
+This CLI diagnostic is separate from the eighteen URL `Reason` codes.
+Successful stdout still contains the requested normal forms, including
 credentials when present. `TypeError` messages no longer include arbitrary type names.
-The incidental `annotations` attribute is gone. All other public behavior is retained.
+The incidental `annotations` attribute is gone. Invalid relative colons and customized
+string subclasses follow the validation rules described above.
 
 ## Reproducing verification
 

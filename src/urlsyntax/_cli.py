@@ -45,15 +45,19 @@ def main(
         return int(stop.code or 0)
     urls: Iterable[str] = args.urls or _lines(stdin or sys.stdin)
     status = 0
-    for url in urls:
-        try:
-            parsed = parse_http_url(url, allow_userinfo=not args.no_userinfo)
-        except InvalidURLError as error:
-            err.write(f"invalid ({error.reason})\n")
-            status = 1
-            continue
-        if not args.check:
-            out.write(f"{parsed}\n")
+    try:
+        for url in urls:
+            try:
+                parsed = parse_http_url(url, allow_userinfo=not args.no_userinfo)
+            except InvalidURLError as error:
+                err.write(f"invalid ({error.reason})\n")
+                status = 1
+                continue
+            if not args.check:
+                out.write(f"{parsed}\n")
+    except UnicodeDecodeError:
+        err.write("invalid (stdin-decoding-error)\n")
+        return 1
     return status
 
 

@@ -23,6 +23,17 @@ All notable changes to this project are documented here. The format follows
   without echoing the type name, whose length or content is uncontrolled.
 - The incidental top-level `annotations` attribute is removed; it was not in `__all__`.
 
+### Fixed
+
+- `resolve` rejects a literal colon in the first segment of a scheme-less relative
+  path with `bad-path`, even when dot-segment removal would erase that segment.
+  Explicit `./:x`, absolute `/:x`, later-segment colons and encoded `%3Ax` remain valid.
+- String subclasses are validated using their stored string contents across parsing,
+  validation, normalization and both resolution arguments. Overridden string methods
+  can no longer bypass checks or cause undocumented exceptions.
+- The CLI stops on stdin decoding failures with status 1 and the fixed diagnostic
+  `invalid (stdin-decoding-error)`, without a traceback or input contents.
+
 ### Added
 
 - Runnable API examples, a stable-contract guide, freshly verified specification

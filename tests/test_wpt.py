@@ -75,17 +75,22 @@ def test_accepted_inputs_normalize_like_the_browser_href(urls: list[dict[str, An
 
 def test_resolved_references_agree_with_the_browser(urls: list[dict[str, Any]]) -> None:
     checked = 0
+    rejected_colons = 0
     for case in urls:
         if is_valid_http_url(case["input"]) or not _is_http_base(case.get("base")):
             continue
         try:
             target = resolve(case["base"], case["input"])
-        except InvalidURLError:
+        except InvalidURLError as error:
+            if case["input"].startswith(":") and error.reason == "bad-path":
+                rejected_colons += 1
             continue
         assert not case.get("failure"), case
         assert _whatwg_view(normalize(target)) == normalize(case["href"]), case
         checked += 1
-    assert checked >= 30
+    # Eight browser-accepted references violate RFC 3986 path-noscheme.
+    assert rejected_colons == 8
+    assert checked >= 26
 
 
 def _plain_uri_text(href: str) -> bool:

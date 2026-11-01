@@ -114,6 +114,8 @@ def parse_http_url(value: str, *, allow_userinfo: bool = True) -> HttpURL:
     """
     if not isinstance(value, str):
         raise TypeError("value must be str")
+    # Use the stored text even when a subclass overrides string operations.
+    value = str.__str__(value)
     check_characters(value)
     parts = split_reference(value)
     scheme = (parts.scheme or "").lower()

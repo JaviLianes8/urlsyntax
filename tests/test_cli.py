@@ -4,6 +4,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from urlsyntax._cli import main
 
 SRC = Path(__file__).resolve().parents[1] / "src"
@@ -71,3 +73,50 @@ def test_runs_as_a_module() -> None:
         env={**os.environ, "PYTHONPATH": str(SRC)},
     )
     assert (result.returncode, result.stdout) == (0, "http://a/\n"), result.stderr
+
+
+@pytest.mark.parametrize("argv", [[], ["--check"]])
+@pytest.mark.parametrize("prefix", [b"", b"http://a/\n" * 1000], ids=["invalid", "mixed"])
+def test_malformed_stdin_encoding_has_a_fixed_diagnostic(argv: list[str], prefix: bytes) -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "urlsyntax", *argv],
+        input=prefix + b"http://user:secret@x/\xff\nhttp://after/\n",
+        capture_output=True,
+        timeout=30,
+        env={**os.environ, "PYTHONPATH": str(SRC), "PYTHONIOENCODING": "utf-8:strict"},
+    )
+    assert (result.returncode, result.stderr.splitlines()) == (
+        1,
+        [b"invalid (stdin-decoding-error)"],
+    )
+    if argv or not prefix:
+        assert result.stdout == b""
+    else:
+        # Decoder read-ahead determines how much of the valid prefix was processed.
+        assert all(line == b"http://a/" for line in result.stdout.splitlines())
+        assert len(result.stdout.splitlines()) <= 1000
+
+
+@pytest.mark.parametrize("value", [" http://a/", "http://a/ ", "\thttp://a/", "http://a/\t"])
+def test_stdin_preserves_invalid_whitespace(value: str) -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "urlsyntax"],
+        input=value + "\n",
+        text=True,
+        capture_output=True,
+        timeout=30,
+        env={**os.environ, "PYTHONPATH": str(SRC)},
+    )
+    assert (result.returncode, result.stdout, result.stderr) == (
+        1,
+        "",
+        "invalid (illegal-character)\n",
+    )
+
+
+def test_no_userinfo_refuses_an_empty_userinfo_delimiter() -> None:
+    assert _run(["--no-userinfo", "http://@a/"]) == (
+        1,
+        "",
+        "invalid (userinfo-not-allowed)\n",
+    )
