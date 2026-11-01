@@ -70,7 +70,7 @@ Hand-written browser cases and generated properties are identified as such.
 | 16. Independent reviewer | PENDING |
 | 17. Merge and publication | PENDING; PR #4 open from `release/1.0.0`, guard CLEAN |
 | 18. Mutation round | PASS: twenty deliberate bugs caught after two missing contracts were added |
-| 19. Five QA lenses | PENDING: no lens verdict has been recorded |
+| 19. Five QA lenses | Round 1: A, B, C and E reported FAIL; fixes below await re-verification |
 
 ## Packaging, compatibility and interpreter coverage
 
@@ -159,5 +159,38 @@ The full final run enables fetched sources, wheel builds and the PyPI upgrade te
 PR: https://github.com/JaviLianes8/urlsyntax/pull/4, from `release/1.0.0` to `main`.
 Guard result: `CLEAN: urlsyntax #4`.
 
-Independent reviewer and all five QA lenses remain pending. No previous verdicts are
-carried forward. Merge and PyPI publication are outside this preparation stage.
+Independent review and final QA approval remain pending. Merge and PyPI publication
+are outside this preparation stage.
+
+## QA lenses: round 1 fixes
+
+Reviewed base: `51a356e8e3bc00786b77de7ba8a5adcb14662f8c`, dated 2026-11-01.
+Fix commit: `37bddaa02d35687e1e4fba0343badd92eef7a813`.
+All eight reported findings are addressed; none is disputed. The original FAIL
+verdicts remain pending independent re-verification. Lens D's verdict is not recorded here.
+
+| Finding | Change and contract |
+| --- | --- |
+| A-01, B-01 | Reject literal colons in the first relative-path segment with `bad-path` before dot removal; seven negative cases and four valid colon forms in `test_resolve.py` |
+| C-01 | Use built-in string contents before parsing or resolving; overridden indexing, iteration, length, truth testing and string conversion covered in `test_string_subclasses.py` |
+| C-02 | Stop on stdin decoding failure with status 1 and a fixed diagnostic; strict UTF-8 subprocess tests cover malformed and mixed input, including `--check` |
+| E-001 | Parser, validator and CLI contracts reject an empty userinfo delimiter when userinfo is disabled |
+| E-002 | An invalid base is rejected even when a valid absolute reference replaces it |
+| E-003 | CLI subprocess contracts reject leading/trailing spaces and tabs on stdin |
+| E-004 | Inequality is checked independently for all eight stored `HttpURL` fields |
+
+Before implementation, the focused contract run failed 19 cases and passed 91.
+After the fixes it passed all 110; mixed-input and separate validator checks were
+then added. The browser corpus now explicitly checks eight RFC-invalid colon-leading
+references and retains 26 valid resolution comparisons. GUIDE and CHANGELOG describe
+all three behavior corrections; public names, signatures and URL reason codes are unchanged.
+
+The four surviving lens E mutations were reapplied individually in a scratch copy:
+M16 failed all three empty-userinfo contracts, M34 failed the absolute-reference/base
+contract, M42 failed all four whitespace cases, and M45 failed the host-kind case
+while the other seven field cases passed. Each mutation was restored after its run.
+
+Final verification: `ruff format --check .`, `ruff check .`, `mypy --strict src`,
+and `pytest` each exit 0; `mypy --strict src tests` also passes. The full suite reports
+416 passed, no skips, with fetched fixtures, installed-wheel checks and the PyPI 0.2.1
+upgrade enabled. Every test uses a 300-second timeout and scratch basetemp.
