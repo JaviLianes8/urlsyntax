@@ -70,7 +70,7 @@ Hand-written browser cases and generated properties are identified as such.
 | 16. Independent reviewer | PENDING |
 | 17. Merge and publication | PENDING; PR #4 open from `release/1.0.0`, guard CLEAN |
 | 18. Mutation round | PASS: twenty deliberate bugs caught after two missing contracts were added |
-| 19. Five QA lenses | Round 1: A, B, C and E reported FAIL; fixes below await re-verification |
+| 19. Five QA lenses | Round 1 fixes and round 2 E-005 coverage fix below; independent approval pending |
 
 ## Packaging, compatibility and interpreter coverage
 
@@ -194,3 +194,32 @@ Final verification: `ruff format --check .`, `ruff check .`, `mypy --strict src`
 and `pytest` each exit 0; `mypy --strict src tests` also passes. The full suite reports
 416 passed, no skips, with fetched fixtures, installed-wheel checks and the PyPI 0.2.1
 upgrade enabled. Every test uses a 300-second timeout and scratch basetemp.
+
+## QA lenses: round 2 fixes
+
+Reviewed base: `f7f438983aba2f22188c76813b3252a5a4513f9a`, dated 2026-11-01.
+Fix commit: `2d6b2b3c4a3e1865c5d21ac18db798bc8d4c127f`.
+The one reported finding, E-005 from lens E, is addressed; none is disputed.
+Independent re-verification remains pending.
+
+E-005 identified a missing CLI contract: eager stdin consumption could discard all
+valid output before a decoding failure while the existing suite still passed.
+Production behavior already satisfies the contract, so no source or API changes
+were required. CHANGELOG records the additional regression coverage.
+
+- `test_stdin_decoding_failure_retains_output_for_preceding_lines` supplies two
+  valid lines through a controlled iterator, then raises `UnicodeDecodeError`.
+  It asserts both complete normalized output lines, status 1 and the fixed stderr
+  diagnostic, independently of decoder read-ahead.
+- The existing strict UTF-8 subprocess test now supplies 2,000 valid lines before
+  malformed input and requires a nonempty valid output prefix. Its check-only and
+  malformed-first-input cases continue to require empty stdout.
+- N20 (`urls = list(urls)` before the processing loop) was applied alone in a
+  scratch source copy. Both contracts failed because stdout was empty: 2 failed,
+  17 passed. The copied source was restored after the run.
+
+Final verification on the unchanged production implementation: 417 passed, no
+skips, with fetched fixtures, installed-wheel checks and the PyPI 0.2.1 upgrade
+enabled. `ruff format --check .`, `ruff check .`, `mypy --strict src` and `pytest`
+each exit 0; `mypy --strict src tests` also passes. Every test uses a 300-second
+timeout and scratch basetemp.
