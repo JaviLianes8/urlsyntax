@@ -59,6 +59,14 @@ def test_long_ports_are_refused_or_read_without_crashing() -> None:
     assert parse_http_url("http://a:000000/").port == 0
 
 
+@pytest.mark.parametrize("scheme", ["http", "https"])
+@pytest.mark.parametrize("port", [0, 1, 65534, 65535])
+def test_port_boundaries_are_inclusive(scheme: str, port: int) -> None:
+    url = parse_http_url(f"{scheme}://a:{port:08d}/")
+    assert url.port == url.effective_port == port
+    assert str(url) == f"{scheme}://a:{port}/"
+
+
 def test_str_is_the_normal_form() -> None:
     for url in ("http://[::1]:81/x?#", "https://u@h/", "http://a"):
         assert str(parse_http_url(url)) == normalize(url)

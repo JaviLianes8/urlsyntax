@@ -8,11 +8,11 @@ Progress:
 - [x] Runnable API examples and safe diagnostics
 - [x] Fetch RFCs, WHATWG and pinned browser corpora; verify existing extracts
 - [x] Extend contracts, seeded properties and documentation
-- [ ] Installed wheel, CLI, upgrade and artifact inspection
-- [ ] Available interpreter matrix
-- [ ] Mutation round and final gates
+- [x] Installed wheel, CLI, upgrade and artifact inspection
+- [x] Available interpreter matrix
+- [x] Mutation round and final gates
 - [ ] Independent review and five QA lenses
-- [ ] Pull request and final guard
+- [x] Pull request #4 and guard CLEAN
 - [ ] Merge and publication
 
 ## API review
@@ -48,7 +48,116 @@ The earlier RFC fixture hashes match the freshly downloaded texts. Tests also co
 that each existing normalization and IPv6 example occurs in its cited fetched source.
 Hand-written browser cases and generated properties are identified as such.
 
-## Verification status
+## Scorecard
 
-Final results, mutation table and packaging evidence will be recorded after execution.
-Independent review, five QA lenses, merge and publication remain pending.
+| Item | Result and evidence |
+| --- | --- |
+| 1. Stable API | PASS: nine exports, signatures/defaults/fields pinned, changes documented |
+| 2. Exact exports | PASS: `__all__` and every non-private package attribute checked |
+| 3. Runnable docstrings | PASS: 16 doctest examples; README and GUIDE output executed |
+| 4. Typing | PASS: `mypy --strict src tests`; external consumer typing from installed wheel; `py.typed` |
+| 5. Safe typed errors | PASS: all eighteen reasons reached; fixed bounded messages; CLI omits invalid inputs |
+| 6. Complete contracts | PASS: constructors, fields, aliases, signatures, errors, CLI and boundary contracts |
+| 7. Ground truth | PASS: live specifications, WPT and standard-library references described above |
+| 8. Wheel and upgrade | PASS: isolated install, CLI subprocesses, live PyPI 0.2.1 upgrade |
+| 9. Properties | PASS: 70,000 seeded grammar, IPv6, parse and resolution candidates; six scaling shapes |
+| 10. Available Pythons | PASS: CPython 3.11.11 and 3.14.6; unavailable versions listed below |
+| 11. README | PASS: executed examples, verified comparison, absolute links and strict twine check |
+| 12. CHANGELOG | PASS: dated 2026-11-01, stable API and every change from 0.2.1 |
+| 13. Metadata | PASS: 1.0.0, Production/Stable, MIT, Python >=3.10, URLs, no runtime requirements |
+| 14. Archives | PASS: wheel and sdist lists inspected, LICENSE and typing marker included |
+| 15. Gates | PASS: format, lint, strict source typing and pytest, each exits zero |
+| 16. Independent reviewer | PENDING |
+| 17. Merge and publication | PENDING; PR #4 open from `release/1.0.0`, guard CLEAN |
+| 18. Mutation round | PASS: twenty deliberate bugs caught after two missing contracts were added |
+| 19. Five QA lenses | PENDING: no lens verdict has been recorded |
+
+## Packaging, compatibility and interpreter coverage
+
+The live https://pypi.org/pypi/urlsyntax/json response was fetched on 2026-11-01.
+Installing `urlsyntax==0.2.1` from PyPI confirmed its source matches `main` exactly.
+A seed-20261101 differential check compared 5,003 candidates across both validator
+options, parsing, normalization and resolution: 25,015 calls, no differing results
+or error families. `HttpURL` and `InvalidURLError` pickles work in both directions
+between the installed 0.2.1 release and the installed 1.0.0 wheel.
+
+`URLSYNTAX_E2E=1 URLSYNTAX_E2E_PYPI=1`: both packaging tests pass. They build the
+wheel, install 0.2.1 into a new venv, exercise it, upgrade in place to the wheel and
+exercise the external consumer again using `-I` from an empty directory. Subprocess
+checks cover the console script and module entry point, stdin, empty lines, mixed
+valid/invalid arguments, userinfo policy, check-only mode, help and usage errors.
+The documented old and new invalid-input stderr formats are asserted separately.
+
+A separate sdist build produced the wheel from that sdist. Both archives passed
+`twine check --strict`. The wheel contains twelve Python modules, `py.typed`, entry
+point and distribution metadata, and the MIT LICENSE. The sdist contains source,
+intentional contract tests, short RFC example values, the metadata-only upstream
+manifest, fetch script, README, GUIDE, CHANGELOG and LICENSE. No caches, downloaded
+corpora, full specifications, scratch files or release report are distributed.
+Metadata was inspected directly for version, minimum Python, stable classifier,
+license, required URLs and optional-only development dependencies.
+
+The sdist was unpacked, its `src` directory moved outside the test tree, and its
+suite run against the wheel installed into fresh venvs:
+
+| Interpreter | Origin | Installed suite |
+| --- | --- | --- |
+| CPython 3.14.6 | System Python | 362 passed, 2 opt-in packaging tests skipped |
+| CPython 3.11.11 | Blender 4.5 bundled Python | 362 passed, 2 opt-in packaging tests skipped |
+
+The Python launcher lists additional 3.10 through 3.14/free-threaded installations,
+but every corresponding executable path is absent. All six local versioned Python
+shims fail because their target is missing. Existing application venvs use the same
+3.14.6 base. Python 3.10, 3.12, 3.13 and free-threaded 3.14 were therefore unavailable
+and are not claimed as runtime-tested here. The minimum-version syntax/type target
+remains 3.10.
+
+Without downloaded sources the suite reports 353 passed, 11 skipped (nine upstream
+checks and two opt-in packaging checks). The fetch script successfully re-fetches all
+six manifest entries. A deliberately changed RFC file is rejected by its manifest
+check. Every pytest run uses a scratch basetemp and a 300-second per-test timeout.
+
+## Mutation round
+
+Each mutation was applied alone in a private source copy, with bytecode writing
+disabled, and the contract suite run with `-x` and a 300-second test/process limit.
+The original source was restored after each run. Eighteen were caught immediately;
+M01 and M14 survived, so exact port-boundary and absolute-reference component contracts
+were added. Both then failed on those contracts. No survivor remains. The untouched
+suite passed before the round and the expanded installed suite passed afterward.
+
+| ID | Mutation | Caught by |
+| --- | --- | --- |
+| M01 | reject maximum port | `test_parse.py::test_port_boundaries_are_inclusive` |
+| M02 | wrong HTTP default port | `test_browser_cases.py::test_normal_form_matches_the_browser_href` |
+| M03 | ignore no-userinfo policy | `test_cli.py::test_no_userinfo_refuses_credentials` |
+| M04 | drop query | `test_browser_cases.py::test_normal_form_matches_the_browser_href` |
+| M05 | drop fragment | `test_contract_stable.py::test_guide_examples_run` |
+| M06 | wrong non-string error type | `test_contract_stable.py::test_non_string_errors_do_not_quote_arbitrary_type_names` |
+| M07 | retain host case | `test_browser_cases.py::test_normal_form_matches_the_browser_href` |
+| M08 | accept ambiguous IPv4 | `test_browser_cases.py::test_inputs_the_browser_refuses_are_refused` |
+| M09 | decode reserved escapes | `test_browser_cases.py::test_inputs_the_browser_refuses_are_refused` |
+| M10 | accept invalid second hex digit | `test_grammar_oracle.py::test_the_parser_matches_the_grammar_oracle` |
+| M11 | compress last tied zero run | `test_fetched_specs.py::test_ipv6_examples_are_in_the_fetched_rfc` |
+| M12 | allow zero-width compression | `test_ipv6.py::test_refuses_what_the_grammar_refuses` |
+| M13 | lose inherited query | `test_fetched_specs.py::test_resolution_vectors_are_extracted_from_the_live_rfc` |
+| M14 | swap resolved query and fragment | `test_resolve.py::test_absolute_references_keep_query_and_fragment` |
+| M15 | accept non-string input | `test_contract_stable.py::test_public_docstrings_and_alias_examples_run` |
+| M16 | invalid CLI input exits zero | `test_cli.py::test_reports_invalid_urls_and_exits_one` |
+| M17 | echo invalid CLI input | `test_cli.py::test_reports_invalid_urls_and_exits_one` |
+| M18 | treat explicit port zero as absent | `test_contract_stable.py::test_value_constructor_hash_copy_and_pickle` |
+| M19 | retain parent directory | `test_browser_cases.py::test_normal_form_matches_the_browser_href` |
+| M20 | skip normalization | `test_browser_cases.py::test_normal_form_matches_the_browser_href` |
+
+## Gates and remaining stages
+
+The four gates run independently: `ruff format --check .`, `ruff check .`,
+`mypy --strict src`, and `pytest`. The additional `mypy --strict src tests` check passes.
+The full final run enables fetched sources, wheel builds and the PyPI upgrade test:
+364 passed, no skips, in 39.23 seconds on CPython 3.14.6.
+
+PR: https://github.com/JaviLianes8/urlsyntax/pull/4, from `release/1.0.0` to `main`.
+Guard result: `CLEAN: urlsyntax #4`.
+
+Independent reviewer and all five QA lenses remain pending. No previous verdicts are
+carried forward. Merge and PyPI publication are outside this preparation stage.

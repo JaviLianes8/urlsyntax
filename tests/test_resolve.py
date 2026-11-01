@@ -27,6 +27,15 @@ def test_merges_with_an_empty_base_path() -> None:
     assert resolve("http://example.com", "c") == "http://example.com/c"
 
 
+@pytest.mark.parametrize("prefix", ["https:", "http:", ""])
+@pytest.mark.parametrize("suffix", ["?x=1#f", "?#f", "?x=1#", "?#", "#f", "?x=1"])
+def test_absolute_references_keep_query_and_fragment(prefix: str, suffix: str) -> None:
+    expected_scheme = prefix or "http:"
+    assert resolve(BASE, prefix + "//other/a/../b" + suffix) == (
+        expected_scheme + "//other/b" + suffix
+    )
+
+
 @pytest.mark.parametrize(
     ("reference", "reason"),
     [
