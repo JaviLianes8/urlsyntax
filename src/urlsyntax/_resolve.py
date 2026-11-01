@@ -16,6 +16,9 @@ def resolve(base: str, reference: str) -> str:
     ``reference`` must be URI text, and the target must itself be a valid http or
     https URL, so ``"mailto:x"`` or ``"http:g"`` raise ``InvalidURLError``. An empty
     reference gives the base without its fragment.
+
+    >>> resolve("https://example.com/a/b", "../c")
+    'https://example.com/c'
     """
     if not isinstance(base, str) or not isinstance(reference, str):
         raise TypeError("base and reference must be str")

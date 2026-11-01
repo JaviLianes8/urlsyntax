@@ -3,7 +3,7 @@
     "title": "web-platform-tests url/resources/urltestdata.json",
     "url": "https://raw.githubusercontent.com/web-platform-tests/wpt/745b9bf3e485300a83b90c62b310ea02cc84e0d9/url/resources/urltestdata.json",
     "revision": "commit 745b9bf3e485300a83b90c62b310ea02cc84e0d9",
-    "fetched": "2026-10-13",
+    "fetched": "2026-11-01",
     "size": 229610,
     "sha256": "81e85fd3c199c08ef9c34cf651b3580eeedd080316493bfaf277a6b5ff8cf652",
     "licence": "BSD-3-Clause (web-platform-tests contributors)"
@@ -12,9 +12,41 @@
     "title": "web-platform-tests url/resources/toascii.json",
     "url": "https://raw.githubusercontent.com/web-platform-tests/wpt/745b9bf3e485300a83b90c62b310ea02cc84e0d9/url/resources/toascii.json",
     "revision": "commit 745b9bf3e485300a83b90c62b310ea02cc84e0d9",
-    "fetched": "2026-10-13",
+    "fetched": "2026-11-01",
     "size": 9101,
     "sha256": "644eba9d5b593df8095cfa307222f3014542ff9cc02d555f8e5660059d80470f",
     "licence": "BSD-3-Clause (web-platform-tests contributors)"
+  },
+  "rfc3986.txt": {
+    "url": "https://www.rfc-editor.org/rfc/rfc3986.txt",
+    "revision": "rfc3986",
+    "fetched": "2026-11-01",
+    "size": 141811,
+    "sha256": "3102dae4b68cebe40337730312fcb612297b8928547267e8b3d1ee6002b2d683",
+    "licence": "IETF Trust Legal Provisions"
+  },
+  "rfc9110.txt": {
+    "url": "https://www.rfc-editor.org/rfc/rfc9110.txt",
+    "revision": "rfc9110",
+    "fetched": "2026-11-01",
+    "size": 502941,
+    "sha256": "21c1cdce6ab0e5509b04d84a28000836c7a087cf786efe6f04877ebfff47232a",
+    "licence": "IETF Trust Legal Provisions"
+  },
+  "rfc5952.txt": {
+    "url": "https://www.rfc-editor.org/rfc/rfc5952.txt",
+    "revision": "rfc5952",
+    "fetched": "2026-11-01",
+    "size": 26570,
+    "sha256": "c75e82c5f53bcec8148820fadf0d65935336ee2031fa6ce10504797ed4c1979d",
+    "licence": "IETF Trust Legal Provisions"
+  },
+  "whatwg.html": {
+    "url": "https://url.spec.whatwg.org/",
+    "revision": "2026-11-01",
+    "fetched": "2026-11-01",
+    "size": 703601,
+    "sha256": "08cb42a9a8575dab006676378c846fdd8a72d06897c27929aa51eaf099656be4",
+    "licence": "WHATWG CC BY 4.0"
   }
 }

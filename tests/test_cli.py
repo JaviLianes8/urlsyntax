@@ -29,9 +29,7 @@ def test_reports_invalid_urls_and_exits_one() -> None:
     code, out, err = _run(["http://a/", "ftp://b/", "http://127.1/"])
     assert code == 1
     assert out == "http://a/\n"
-    assert (
-        err == "invalid (unsupported-scheme): ftp://b/\ninvalid (ambiguous-ipv4): http://127.1/\n"
-    )
+    assert err == "invalid (unsupported-scheme)\ninvalid (ambiguous-ipv4)\n"
 
 
 def test_check_prints_nothing() -> None:
@@ -49,16 +47,13 @@ def test_no_userinfo_refuses_credentials() -> None:
 def test_invalid_lines_are_printed_without_credentials_or_control_characters() -> None:
     code, _, err = _run(["--no-userinfo"], "http://u:secret@a/\nhttp://a/\x1b[31m\n")
     assert code == 1
-    assert err == (
-        "invalid (userinfo-not-allowed): http://***@a/\n"
-        "invalid (illegal-character): http://a/\\x1b[31m\n"
-    )
+    assert err == ("invalid (userinfo-not-allowed)\ninvalid (illegal-character)\n")
 
 
 def test_usage_errors_exit_two_on_the_given_streams() -> None:
     code, out, err = _run(["--bogus"])
     assert (code, out) == (2, "")
-    assert "unrecognized arguments: --bogus" in err
+    assert "invalid command-line arguments" in err
 
 
 def test_help_goes_to_the_given_stdout() -> None:

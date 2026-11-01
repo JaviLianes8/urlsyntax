@@ -64,6 +64,22 @@ def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
     venv.create(env_dir, with_pip=True)
     bindir = env_dir / ("Scripts" if sys.platform == "win32" else "bin")
     python = bindir / "python"
+    upgrade = os.environ.get("URLSYNTAX_E2E_PYPI") == "1"
+    if upgrade:
+        previous = _run(
+            python,
+            "-m",
+            "pip",
+            "install",
+            "--index-url",
+            "https://pypi.org/simple",
+            "urlsyntax==0.2.1",
+        )
+        assert previous.returncode == 0, previous.stderr
+        baseline = _run(python, "-I", "-c", PROGRAM, cwd=tmp_path)
+        assert baseline.returncode == 0, baseline.stderr
+        old_cli = _run(python, "-I", "-m", "urlsyntax", "ftp://b/", cwd=tmp_path)
+        assert old_cli.stderr == "invalid (unsupported-scheme): ftp://b/\n"
     installed = _run(python, "-m", "pip", "install", "-q", wheel)
     assert installed.returncode == 0, installed.stderr
 
@@ -78,7 +94,33 @@ def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
     cli = _run(script, "HTTP://A:80/x/../y", "ftp://b/", cwd=work)
     assert cli.returncode == 1
     assert cli.stdout == "http://a/y\n"
-    assert cli.stderr == "invalid (unsupported-scheme): ftp://b/\n"
+    assert cli.stderr == "invalid (unsupported-scheme)\n"
+
+    module = _run(
+        python, "-I", "-m", "urlsyntax", "--check", "--no-userinfo", "http://u@h/", cwd=work
+    )
+    assert (module.returncode, module.stdout, module.stderr) == (
+        1,
+        "",
+        "invalid (userinfo-not-allowed)\n",
+    )
+    stdin = subprocess.run(
+        [str(script)],
+        input="http://A:80\n\nftp://b/\n",
+        capture_output=True,
+        text=True,
+        cwd=work,
+        timeout=60,
+    )
+    assert (stdin.returncode, stdin.stdout, stdin.stderr) == (
+        1,
+        "http://a/\n",
+        "invalid (unsupported-scheme)\n",
+    )
+    help_result = _run(script, "--help", cwd=work)
+    assert help_result.returncode == 0 and "--no-userinfo" in help_result.stdout
+    usage = _run(script, "--token=secret", cwd=work)
+    assert usage.returncode == 2 and "secret" not in usage.stderr
 
 
 def test_distributions_ship_no_third_party_corpus(tmp_path: Path) -> None:
@@ -88,9 +130,15 @@ def test_distributions_ship_no_third_party_corpus(tmp_path: Path) -> None:
     (sdist,) = tmp_path.glob("urlsyntax-*.tar.gz")
     wheel_names = zipfile.ZipFile(wheel).namelist()
     assert all(n.startswith(("urlsyntax/", "urlsyntax-")) for n in wheel_names), wheel_names
+    assert "urlsyntax/py.typed" in wheel_names
+    assert any(n.endswith("/licenses/LICENSE") for n in wheel_names)
+    assert not any("__pycache__" in n or n.endswith(".pyc") for n in wheel_names)
     with tarfile.open(sdist) as archive:
         names = [n.split("/", 1)[1] for n in archive.getnames() if "/" in n]
     assert "tests/upstream/MANIFEST.json" in names
     assert "tests/test_wpt.py" in names
+    assert "LICENSE" in names and "GUIDE.md" in names
     assert not any(n.endswith(("urltestdata.json", "toascii.json")) for n in names), names
     assert not any(n.startswith((".github", "IMPROVEMENTS")) for n in names), names
+    checked = _run(sys.executable, "-m", "twine", "check", "--strict", wheel, sdist)
+    assert checked.returncode == 0, checked.stdout + checked.stderr

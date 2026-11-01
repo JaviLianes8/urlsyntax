@@ -1,5 +1,7 @@
 # urlsyntax
 
+[![Lianes8 Certified](https://lianes8studio.com/certified/lianes8-certified-badge.svg)](https://lianes8studio.com/certified)
+
 Syntax-only validation, parsing, normalization and resolution of http and https URLs.
 Follows RFC 3986 and RFC 9110, refuses what browsers would refuse or read differently,
 zero dependencies, fully typed, no network or DNS.
@@ -44,7 +46,7 @@ print(reason("http://[::1%25eth0]/"))  # bad-ipv6
 print(reason("http://example.com/"))  # valid
 ```
 
-Every reason is listed under [Reasons](#reasons). `InvalidURLError` is a `ValueError`, and
+Every reason is listed under [Reasons](https://github.com/JaviLianes8/urlsyntax#reasons). `InvalidURLError` is a `ValueError`, and
 its message never repeats the input, which may hold a password.
 
 ### Parse
@@ -60,7 +62,7 @@ print(parse_http_url("http://[2001:DB8:0:0::1]:8080/").host)  # 2001:db8::1
 print(str(url))  # https://User@example.com/a/b/~user?q=1#top
 ```
 
-Every field of `HttpURL` is in normal form, and `str(url)` is the same text `normalize`
+Every field returned by `parse_http_url` is in normal form, and `str(url)` is the same text `normalize`
 returns. `userinfo`, `query` and `fragment` are `None` when absent and `""` when present but
 empty. `port` is `None` when it is absent, empty or the scheme default.
 
@@ -98,12 +100,12 @@ for the canonical form. A target that is not an http or https URL with a host (s
 ```
 $ python -m urlsyntax "HTTP://Example.COM:80/a/../b" "http://127.1/"
 http://example.com/b
-invalid (ambiguous-ipv4): http://127.1/
+invalid (ambiguous-ipv4)
 ```
 
 With no arguments it reads one URL per line from standard input. `--check` only validates,
-`--no-userinfo` refuses credentials. An invalid URL is echoed on standard error with its
-userinfo replaced by `***` and control characters escaped. The exit status is 0 when every
+`--no-userinfo` refuses credentials. Invalid inputs produce a reason code on standard error without echoing the input.
+Usage errors likewise omit arguments, which may contain secrets. The exit status is 0 when every
 URL is valid, 1 when any is invalid, 2 for a usage error. The same command is installed as
 `urlsyntax`.
 
@@ -189,18 +191,21 @@ Changing these could change what the URL addresses:
 
 ## Why
 
-Validation and normalization are usually two separate tools. `validators` checks a URL
-with a regular expression but does not normalize. `url-normalize` normalizes but guesses
-missing parts, such as filling in a scheme, which changes what the string addresses. The
-standard library's `urllib.parse` splits and rebuilds a URL but makes no judgement about
-whether it is a valid http URL, accepts hosts such as `0x7f.1` that reach a different
-machine than they appear to, and applies none of these normalizations. `urlsyntax` does
-all of it, conservatively, with full type hints and no third-party dependency, and it
-never touches the network.
+`urllib.parse.urlsplit` splits a URL into components; it is not an HTTP URL validator.
+For example, it retains `0x7f.1` as the hostname and retains the original path and port.
+`urlsyntax` refuses that ambiguous IPv4 spelling and provides a normalized immutable
+result with typed rejection reasons. Choose `urllib.parse` for general URI splitting;
+choose this package when you need this stricter HTTP(S) contract without dependencies.
+Neither syntax validation nor normalization proves that a destination is safe to fetch:
+DNS results, redirects and network access policy remain the caller's responsibility.
+
+The [GUIDE](https://github.com/JaviLianes8/urlsyntax/blob/main/GUIDE.md) describes the
+stable API and upgrade, and the
+[CHANGELOG](https://github.com/JaviLianes8/urlsyntax/blob/main/CHANGELOG.md) lists changes.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](https://github.com/JaviLianes8/urlsyntax/blob/main/LICENSE).
 
 ## Links
 
